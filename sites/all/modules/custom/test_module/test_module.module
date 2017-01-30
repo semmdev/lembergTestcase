@@ -104,8 +104,5 @@ function test_module_block_view($delta = '') {
  * Implements hook_views_api().
  */
 function test_module_views_api() {
-  return array(
-    'api' => 3,
-    'path' => drupal_get_path('module', 'test_module') . '/views',
-  );
+  return array('api' => 3.0);
 }

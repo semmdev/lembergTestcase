@@ -1,5 +1,4 @@
 <?php
-function last_5_test_ct_nodes() {
 
   $view = new view();
   $view->name = 'last_5_test_ct_nodes';
@@ -52,6 +51,3 @@ function last_5_test_ct_nodes() {
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
-
-  return $view;
-}
