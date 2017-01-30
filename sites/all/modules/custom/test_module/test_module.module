@@ -1,0 +1,111 @@
+<?php
+/**
+ * Implements hook_node_info()
+ */
+function test_module_node_info() {
+  return array(
+    'test_ct' => array(
+      'name' => t('Test CT'),
+      'base' => 'test_module',
+      'description' => t('You can define new CT here'),
+      'title_label' => t('Test CT'),
+      'locked' => TRUE,
+    )
+  );
+}
+
+/**
+ * Implement hook_form()
+ */
+function test_module_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function test_module_theme_registry_alter(&$theme_registry) {
+  $module_path = drupal_get_path('module', 'test_module');
+  $template_file_objects = drupal_find_theme_templates($theme_registry, '.tpl.php', $module_path);
+  foreach ($template_file_objects as $key => $template_file_object) {
+    if (!isset($theme_registry[$key]['theme path']) || !preg_match('#/themes/#', $theme_registry[$key]['theme path'])) {
+      $theme_registry[$key]['theme path'] = $module_path;
+      $theme_registry[$key] = array_merge($theme_registry[$key], $template_file_object);
+      $theme_registry[$key]['type'] = 'module';
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function test_module_theme($existing, $type, $theme, $path) {
+  $theme = array();
+  $theme['test_ct'] = array(
+    'render element' => 'content',
+    'base hook' => 'node',
+    'template' => 'node--test_ct',
+    'path' => drupal_get_path('module', 'test_module') . '/templates',
+  );
+  return $theme;
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function test_module_preprocess_node(&$variables){
+  $node = $variables['node'];
+  if (isset($node->type)) {
+    $zebra = ($node->nid % 2) ? 'even' : 'odd';
+    $variables['theme_hook_suggestions'][] = 'node__' . $zebra . '__' . $node->type;
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function test_module_block_info() {
+  $blocks['last_3_nodes_block'] = array(
+    'info' => t('Last 3 Test CT nodes.'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function test_module_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'last_3_nodes_block':
+      $block['subject'] = t('Last 3 Test CT nodes');
+      $block['content'] = '';
+      $query = new EntityFieldQuery();
+      $entities = $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'test_ct')
+        ->propertyOrderBy("created", "DESC")
+        ->range(0, 3)
+        ->execute();
+      if (!empty($entities['node'])) {
+        foreach($entities['node'] as $obj) {
+          $node = node_load($obj->nid);
+          $block['content'] .= l($node->title, "node/" . $node->nid)  . '<br>';
+        }
+      }
+
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function test_module_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'test_module') . '/views',
+  );
+}

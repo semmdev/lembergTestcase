@@ -1,0 +1,10 @@
+name = Test module
+description = Lemberg Solution testcase.
+package = Custom module
+core = 7.x
+files[] = test_module.install
+files[] = test_module.module
+dependencies[] = ctools
+dependencies[] = views
+dependencies[] = views_ui
+dependencies[] = link

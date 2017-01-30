@@ -1,0 +1,84 @@
+<?php
+/**
+ * Implements hook_install().
+ */
+function test_module_install() {
+  node_types_rebuild();
+  $types = node_type_get_types();
+  node_add_body_field($types['test_ct']);
+  if (!field_info_field('field_custom_link')) {
+    field_info_cache_clear();
+    foreach (_test_module_installed_fields() as $field) {
+      field_create_field($field);
+    }
+    foreach (_test_module_installed_instances() as $instance) {
+      field_create_instance($instance);
+    }
+  }
+}
+
+/**
+ * Create the field definition array.
+ */
+function _test_module_installed_fields() {
+  $fields['field_custom_link'] = array(
+    'field_name' => 'field_custom_link',
+    'module' => 'link',
+    'type' => 'link_field',
+  );
+  return $fields;
+}
+
+/**
+ * Create the field instance definition array.
+ */
+function _test_module_installed_instances() {
+  $instances['field_custom_link'] = array(
+    'bundle' => 'test_ct',
+    'display' => array(
+      'default' => array(
+        'module' => 'link',
+        'type' => 'link_default',
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_custom_link',
+    'label' => 'Link',
+    'widget' => array(
+      'module' => 'link',
+      'type' => 'link_field',
+    ),
+  );
+  return $instances;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function test_module_uninstall() {
+  $type = 'test_ct';
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => $type));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+  if (!empty($nids)) {
+    node_delete_multiple($nids);
+    drupal_set_message(t('%count nodes has been deleted.', array('%count' => count($nids))));
+  }
+  if (node_type_load($type)) {
+    node_type_delete($type);
+    variable_del('node_preview_' . $type);
+    drupal_set_message(t('%type content type has been deleted.', array('%type' => $type)));
+  }
+  foreach (array_keys(_test_module_installed_instances()) as $instance) {
+    field_delete_instance($instance);
+  }
+  foreach (array_keys(_test_module_installed_fields()) as $field) {
+    field_delete_field($field);
+  }
+  field_purge_batch(1000);
+  node_type_cache_reset();
+  node_types_rebuild();
+}
