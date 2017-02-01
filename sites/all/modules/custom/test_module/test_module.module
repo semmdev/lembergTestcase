@@ -10,7 +10,7 @@ function test_module_node_info() {
       'description' => t('You can define new CT here'),
       'title_label' => t('Test CT'),
       'locked' => TRUE,
-    )
+    ),
   );
 }
 
@@ -53,7 +53,7 @@ function test_module_theme($existing, $type, $theme, $path) {
 /**
  * Implements hook_preprocess_node().
  */
-function test_module_preprocess_node(&$variables){
+function test_module_preprocess_node(&$variables) {
   $node = $variables['node'];
   if (isset($node->type)) {
     $zebra = ($node->nid % 2) ? 'even' : 'odd';
@@ -82,20 +82,13 @@ function test_module_block_view($delta = '') {
     case 'last_3_nodes_block':
       $block['subject'] = t('Last 3 Test CT nodes');
       $block['content'] = '';
-      $query = new EntityFieldQuery();
-      $entities = $query
-        ->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', 'test_ct')
-        ->propertyOrderBy("created", "DESC")
-        ->range(0, 3)
-        ->execute();
+      $entities = _get_test_ct_nodes(3);
       if (!empty($entities['node'])) {
-        foreach($entities['node'] as $obj) {
+        foreach ($entities['node'] as $obj) {
           $node = node_load($obj->nid);
-          $block['content'] .= l($node->title, "node/" . $node->nid)  . '<br>';
+          $block['content'] .= l($node->title, "node/" . $node->nid) . '<br>';
         }
       }
-
       break;
   }
   return $block;
@@ -105,7 +98,10 @@ function test_module_block_view($delta = '') {
  * Implements hook_views_api().
  */
 function test_module_views_api() {
-  return array('api' => 3.0);
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'test_module') . '/includes/views',
+  );
 }
 
 /**
@@ -125,18 +121,32 @@ function test_module_webform_select_options_info() {
  */
 function _get_list_test_ct_nodes() {
   $options = array();
-  $query = new EntityFieldQuery();
-  $entities = $query
-    ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'test_ct')
-    ->propertyCondition('status', 1)
-    ->propertyOrderBy('nid', 'ASC')
-    ->execute();
+  $entities = _get_test_ct_nodes(99);
   if (!empty($entities['node'])) {
     $nodes = entity_load('node', array_keys($entities['node']));
-    foreach($nodes as $node) {
+    foreach ($nodes as $node) {
       $options[$node->nid] = $node->title;
     }
   }
   return $options;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory
+ */
+function test_module_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/content_types';
+  }
+}
+
+function _get_test_ct_nodes($n) {
+  $query = new EntityFieldQuery();
+  $entities = $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'test_ct')
+    ->propertyOrderBy("created", "DESC")
+    ->propertyCondition('status', 1)
+    ->range(0, $n)
+    ->execute();
+    return $entities;
 }

@@ -2,10 +2,19 @@ name = Test module
 description = Lemberg Solution testcase.
 package = Custom module
 core = 7.x
-files[] = test_module.install
-files[] = test_module.module
+
 dependencies[] = ctools
 dependencies[] = views
 dependencies[] = views_ui
 dependencies[] = link
 dependencies[] = webform
+dependencies[] = panels
+
+files[] = test_module.install
+files[] = test_module.module
+
+files[] = templates/node--my_module.tpl.php
+files[] = templates/node--odd--my_module.tpl.php
+files[] = templates/node--even--my_module.tpl.php
+
+files[] = plugins/content_types/mymod_custom_pane.inc
