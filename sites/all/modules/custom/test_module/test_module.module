@@ -140,13 +140,28 @@ function test_module_ctools_plugin_directory($owner, $plugin_type) {
   }
 }
 
+/**
+ * Get Test CT nodes
+ */
 function _get_test_ct_nodes($n) {
   $query = new EntityFieldQuery();
   $entities = $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'test_ct')
-    ->propertyOrderBy("created", "DESC")
+    ->propertyOrderBy('created', 'DESC')
     ->propertyCondition('status', 1)
     ->range(0, $n)
     ->execute();
     return $entities;
+}
+
+function test_module_webservices_controllers_alter(&$controllers) {
+  //Include the necessary inc files.
+//  $file_path = drupal_get_path('module', 'test_module') . '/includes/webservices/test_module.webservices.inc';
+//  require_once($file_path);
+//  $controllers['my_node'] = new WebservicesMyNodeController();
+
+  $controllers['my_node'] = new WebservicesNodeController();
+  $controllers['my_node']->access('method', 'index');
+  return $controllers['my_node'];
+
 }
